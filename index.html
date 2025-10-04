@@ -97,10 +97,11 @@
 
 <div class="container">
   <h2>💬 Form Kritik & Saran</h2>
-  <form id="complaintForm">
+  <form id="complaintForm" enctype="multipart/form-data">
     <input type="text" id="name" placeholder="Nama Anda" required>
     <input type="text" id="contact" placeholder="Email / Nomor WA (opsional)">
     <textarea id="message" rows="5" placeholder="Tulis kritik atau saran Anda..." required></textarea>
+    <input type="file" id="photo" accept="image/*">
     <button type="submit">Kirim Pesan 🚀</button>
     <p id="status"></p>
   </form>
@@ -132,6 +133,7 @@ document.getElementById("complaintForm").addEventListener("submit", async (e) =>
   const name = document.getElementById("name").value.trim();
   const contact = document.getElementById("contact").value.trim();
   const message = document.getElementById("message").value.trim();
+  const photoInput = document.getElementById("photo");
   const status = document.getElementById("status");
 
   if (!name || !message) {
@@ -143,23 +145,35 @@ document.getElementById("complaintForm").addEventListener("submit", async (e) =>
   status.textContent = "⏳ Mengirim...";
   status.className = "";
 
-  const text = `📩 *Pesan Komplain Baru*\n\n👤 Nama: ${name}\n📞 Kontak: ${contact || "-"}\n💬 Pesan:\n${message}`;
+  const caption = `📩 *Pesan Komplain Baru*\n\n👤 Nama: ${name}\n📞 Kontak: ${contact || "-"}\n💬 Pesan:\n${message}`;
 
   try {
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "Markdown" })
-    });
+    if (photoInput.files.length > 0) {
+      // Kirim foto + caption
+      const file = photoInput.files[0];
+      const formData = new FormData();
+      formData.append("chat_id", CHAT_ID);
+      formData.append("caption", caption);
+      formData.append("photo", file);
 
-    if (res.ok) {
-      status.textContent = "✅ Pesan berhasil dikirim, terima kasih!";
-      status.className = "success";
-      document.getElementById("complaintForm").reset();
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+        method: "POST",
+        body: formData
+      });
     } else {
-      throw new Error("Gagal");
+      // Kirim teks saja
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: CHAT_ID, text: caption, parse_mode: "Markdown" })
+      });
     }
-  } catch {
+
+    status.textContent = "✅ Pesan berhasil dikirim, terima kasih!";
+    status.className = "success";
+    document.getElementById("complaintForm").reset();
+  } catch (err) {
+    console.error(err);
     status.textContent = "❌ Gagal mengirim pesan. Coba lagi.";
     status.className = "error";
   }
