@@ -149,18 +149,16 @@ document.getElementById("complaintForm").addEventListener("submit", async (e) =>
   if (photoInput.files.length > 0) formData.append("photo", photoInput.files[0]);
 
   try {
-    const res = await fetch("/send-message", { // endpoint server
-      method: "POST",
-      body: formData
-    });
+    const res = await fetch("/api/send", { method: "POST", body: formData });
     const data = await res.json();
 
-    if (data.status === "success") {
+    if (data.success) {
       status.textContent = "✅ Pesan berhasil dikirim, terima kasih!";
       status.className = "success";
       document.getElementById("complaintForm").reset();
     } else {
-      throw new Error(data.message || "Gagal");
+      status.textContent = "❌ Gagal: " + (data.error || "Coba lagi");
+      status.className = "error";
     }
   } catch (err) {
     console.error(err);
