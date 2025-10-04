@@ -125,9 +125,6 @@
 </div>
 
 <script>
-const BOT_TOKEN = "7961981990:AAErfsixGrTuVeKMykJDzk17Oapt39fmriQ";
-const CHAT_ID = "6960804569";
-
 document.getElementById("complaintForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = document.getElementById("name").value.trim();
@@ -145,33 +142,26 @@ document.getElementById("complaintForm").addEventListener("submit", async (e) =>
   status.textContent = "⏳ Mengirim...";
   status.className = "";
 
-  const caption = `📩 *Pesan Komplain Baru*\n\n👤 Nama: ${name}\n📞 Kontak: ${contact || "-"}\n💬 Pesan:\n${message}`;
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("contact", contact);
+  formData.append("message", message);
+  if (photoInput.files.length > 0) formData.append("photo", photoInput.files[0]);
 
   try {
-    if (photoInput.files.length > 0) {
-      // Kirim foto + caption
-      const file = photoInput.files[0];
-      const formData = new FormData();
-      formData.append("chat_id", CHAT_ID);
-      formData.append("caption", caption);
-      formData.append("photo", file);
+    const res = await fetch("/send-message", { // endpoint server
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
 
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-        method: "POST",
-        body: formData
-      });
+    if (data.status === "success") {
+      status.textContent = "✅ Pesan berhasil dikirim, terima kasih!";
+      status.className = "success";
+      document.getElementById("complaintForm").reset();
     } else {
-      // Kirim teks saja
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: CHAT_ID, text: caption, parse_mode: "Markdown" })
-      });
+      throw new Error(data.message || "Gagal");
     }
-
-    status.textContent = "✅ Pesan berhasil dikirim, terima kasih!";
-    status.className = "success";
-    document.getElementById("complaintForm").reset();
   } catch (err) {
     console.error(err);
     status.textContent = "❌ Gagal mengirim pesan. Coba lagi.";
