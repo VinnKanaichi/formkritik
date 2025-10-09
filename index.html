@@ -8,11 +8,48 @@
 <style>
   * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
   body {
-    margin: 0; height: 100vh;
+    margin: 0; height: 100vh; overflow: hidden;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     background: linear-gradient(135deg, #6e8efb, #a777e3);
-    overflow: hidden;
+    position: relative;
   }
+
+  /* --- animasi background lembut --- */
+  .floating-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .circle {
+    position: absolute;
+    bottom: -150px;
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    animation: floatUp 10s linear infinite;
+  }
+
+  @keyframes floatUp {
+    0% {
+      transform: translateY(0) scale(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateY(-110vh) scale(1.2);
+      opacity: 0;
+    }
+  }
+
+  /* variasi ukuran & delay */
+  .circle:nth-child(1) { left: 10%; width: 40px; height: 40px; animation-delay: 0s; animation-duration: 12s; }
+  .circle:nth-child(2) { left: 25%; width: 25px; height: 25px; animation-delay: 2s; animation-duration: 10s; }
+  .circle:nth-child(3) { left: 50%; width: 50px; height: 50px; animation-delay: 4s; animation-duration: 14s; }
+  .circle:nth-child(4) { left: 70%; width: 30px; height: 30px; animation-delay: 1s; animation-duration: 11s; }
+  .circle:nth-child(5) { left: 85%; width: 20px; height: 20px; animation-delay: 3s; animation-duration: 9s; }
+  .circle:nth-child(6) { left: 40%; width: 15px; height: 15px; animation-delay: 5s; animation-duration: 8s; }
+  .circle:nth-child(7) { left: 60%; width: 35px; height: 35px; animation-delay: 6s; animation-duration: 13s; }
 
   .container {
     width: 90%; max-width: 420px;
@@ -63,7 +100,8 @@
     transform: translate(-50%, -50%) scale(0.8);
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.25);
-    backdrop-filter: blur(10px); color: white; border-radius: 15px;
+    backdrop-filter: blur(15px);
+    color: white; border-radius: 15px;
     padding: 20px 25px; width: 90%; max-width: 600px;
     font-size: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     animation: bubbleIn 0.6s ease forwards; cursor: default; z-index: 999;
@@ -73,6 +111,13 @@
   @keyframes bubbleIn {
     from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
     to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+
+  .info-bubble img {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    border: 2px solid rgba(255,255,255,0.4);
   }
 
   .info-bubble button {
@@ -95,6 +140,17 @@
 </head>
 <body>
 
+<!-- background animasi -->
+<div class="floating-bg">
+  <div class="circle"></div>
+  <div class="circle"></div>
+  <div class="circle"></div>
+  <div class="circle"></div>
+  <div class="circle"></div>
+  <div class="circle"></div>
+  <div class="circle"></div>
+</div>
+
 <div class="container">
   <h2>💬 Form Kritik & Saran</h2>
   <form id="complaintForm" enctype="multipart/form-data">
@@ -111,6 +167,7 @@
 
 <!-- Bubble profil -->
 <div id="profileIntro" class="info-bubble" style="display:none;">
+  <img src="https://files.catbox.moe/d1ctux.jpg" alt="Vinn">
   <h3>👋 Hai, aku Vinn!</h3>
   <p>Developer <b>Furina MD</b> 🤖</p>
   <br> Aku masih 16 tahun dan masih dalam proses belajar, jadi mohon maaf jika project saya masih banyak kekurangan <br>
@@ -125,7 +182,7 @@
 </div>
 
 <script>
-const BOT_TOKEN = "7961981990:AAFBE-ahfAeDC43lPVuOeEn9BNI1Yl6Lp5k";
+const BOT_TOKEN = "7961981990:AAHt92xHgGcEr42GYAC3URhdyPo8kv8S3c4";
 const CHAT_ID = "6960804569";
 
 document.getElementById("complaintForm").addEventListener("submit", async (e) => {
@@ -149,7 +206,6 @@ document.getElementById("complaintForm").addEventListener("submit", async (e) =>
 
   try {
     if (photoInput.files.length > 0) {
-      // Kirim foto + caption
       const file = photoInput.files[0];
       const formData = new FormData();
       formData.append("chat_id", CHAT_ID);
@@ -161,7 +217,6 @@ document.getElementById("complaintForm").addEventListener("submit", async (e) =>
         body: formData
       });
     } else {
-      // Kirim teks saja
       await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -179,7 +234,6 @@ document.getElementById("complaintForm").addEventListener("submit", async (e) =>
   }
 });
 
-// Tampilkan bubble profil sekali per user
 window.addEventListener("load", () => {
   const intro = document.getElementById("profileIntro");
   intro.style.display = "block";
@@ -188,6 +242,27 @@ window.addEventListener("load", () => {
 function closeIntro() {
   document.getElementById("profileIntro").style.display = "none";
 }
+// === Animasi background bubble ===
+const background = document.createElement("div");
+background.className = "bubble-bg";
+document.body.appendChild(background);
+
+function createBubble() {
+  const bubble = document.createElement("span");
+  const size = Math.random() * 12 + 8; // ukuran kecil biar elegan
+  bubble.style.width = `${size}px`;
+  bubble.style.height = `${size}px`;
+  bubble.style.left = `${Math.random() * 100}%`;
+  bubble.style.animationDuration = `${6 + Math.random() * 5}s`;
+  bubble.style.opacity = Math.random() * 0.6 + 0.2;
+  background.appendChild(bubble);
+
+  // hapus bubble saat animasi selesai
+  bubble.addEventListener("animationend", () => bubble.remove());
+}
+
+// buat bubble terus menerus
+setInterval(createBubble, 300);
 </script>
 
 </body>
